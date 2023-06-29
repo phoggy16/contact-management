@@ -1,6 +1,6 @@
 package com.cms.cms.security;
 
-import com.cms.cms.filter.CustomAuthenticationFilter;
+import com.cms.cms.exceptionhandling.CustomAuthenticationEntryPoint;
 import com.cms.cms.filter.CustomAuthorizationFilter;
 import com.cms.cms.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -38,16 +38,17 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        CustomAuthenticationFilter customAuthenticationFilter = new CustomAuthenticationFilter(userService, authenticationManager(http.getSharedObject(AuthenticationConfiguration.class)));
-        customAuthenticationFilter.setFilterProcessesUrl("/api/external/v1/login");
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/external/**").permitAll()
+                        .requestMatchers("/api/external/**",
+                                "/swagger-ui/**",
+                                "/api-docs/**",
+                                "/v3/api-docs/**", "/configuration/ui/**", "/swagger-resources/**", "/configuration/security/**", "/webjars/**").permitAll()
                         .anyRequest().authenticated()
-                );
-        http.addFilter(customAuthenticationFilter);
+                ).exceptionHandling(exception-> exception.authenticationEntryPoint((new CustomAuthenticationEntryPoint())));
+
         http.addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

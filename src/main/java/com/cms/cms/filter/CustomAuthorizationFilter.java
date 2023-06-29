@@ -24,61 +24,51 @@ import java.util.Map;
 import static java.util.Arrays.stream;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 @Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(request.getServletPath().contains("/external/")){
-            filterChain.doFilter(request,response);
-        }else{
-            try{
-                log.info("into the try block");
-                String authorizationHeader=request.getHeader(AUTHORIZATION);
-                log.info("Header is {}",authorizationHeader);
-                if(authorizationHeader!=null && authorizationHeader.startsWith("Bearer ")){
-                    String token=authorizationHeader.substring("Bearer ".length());
-                    Algorithm algorithm=Algorithm.HMAC256("secretKey".getBytes());
-                    JWTVerifier verifier= JWT.require(algorithm).build();
-                    DecodedJWT decodedJWT= verifier.verify(token);
-                    String username= decodedJWT.getSubject();
-                    String[] roles=decodedJWT.getClaim("roles").asArray(String.class);
+        if (request.getServletPath().contains("/external/") || request.getServletPath().contains("swagger") || request.getServletPath().contains("api-docs")) {
+            filterChain.doFilter(request, response);
+        } else {
+            try {
+                String authorizationHeader = request.getHeader(AUTHORIZATION);
+                if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                    String token = authorizationHeader.substring("Bearer ".length());
+                    Algorithm algorithm = Algorithm.HMAC256("secretKey".getBytes());
+                    JWTVerifier verifier = JWT.require(algorithm).build();
+                    DecodedJWT decodedJWT = verifier.verify(token);
+                    String username = decodedJWT.getSubject();
 
-                    Collection<SimpleGrantedAuthority> authorities=new ArrayList<>();
+                    Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
 
-                    stream(roles).forEach(role ->{
-                        log.info("Role is {}",role);
-                        authorities.add(new SimpleGrantedAuthority(role));
-                    });
 
-                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken=
-                            new UsernamePasswordAuthenticationToken(username,null,authorities);
+                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                            new UsernamePasswordAuthenticationToken(username, null, authorities);
 
                     SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-                    filterChain.doFilter(request,response);
+                    filterChain.doFilter(request, response);
 
-                }else{
-                    log.error("Into the else condition");
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                } else {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-                    Map<String,String> error=new HashMap<>();
-                    error.put("error_message","Please provide valid token");
-//                token.put("refresh_token",refresh_token);
+                    Map<String, String> error = new HashMap<>();
+                    error.put("error_message", "Please provide valid token");
 
                     response.setContentType(APPLICATION_JSON_VALUE);
 
-                    new ObjectMapper().writeValue(response.getOutputStream(),error);
+                    new ObjectMapper().writeValue(response.getOutputStream(), error);
                 }
-            }catch(Exception exception){
-                log.error("Into the catch block");
+            } catch (Exception exception) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 
-                Map<String,String> error=new HashMap<>();
-                error.put("error_message",exception.getMessage());
-//                token.put("refresh_token",refresh_token);
+                Map<String, String> error = new HashMap<>();
+                error.put("error_message", exception.getMessage());
 
                 response.setContentType(APPLICATION_JSON_VALUE);
 
-                new ObjectMapper().writeValue(response.getOutputStream(),error);
+                new ObjectMapper().writeValue(response.getOutputStream(), error);
             }
 
         }
