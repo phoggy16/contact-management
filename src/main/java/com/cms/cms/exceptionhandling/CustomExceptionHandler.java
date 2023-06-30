@@ -14,9 +14,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @RestControllerAdvice
 @Slf4j
@@ -26,21 +23,22 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<CustomError> handleApiException(CustomException ex) {
         return new ResponseEntity<>(new CustomError(ex.getStatus(), ex.getMessage(), Instant.now()), ex.getStatus());
     }
+
     @ExceptionHandler(ConstraintViolationException.class)
     ResponseEntity<CustomError> handleConstraintViolationException(ConstraintViolationException e) {
-        return new ResponseEntity<>(new CustomError(HttpStatus.BAD_REQUEST,e.getMessage(),Instant.now()),HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new CustomError(HttpStatus.BAD_REQUEST, e.getMessage(), Instant.now()), HttpStatus.BAD_REQUEST);
     }
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        StringBuilder stringBuilder=new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         for (final FieldError error : ex.getBindingResult().getFieldErrors()) {
-            stringBuilder.append(error.getDefaultMessage()+"; ");
+            stringBuilder.append(error.getDefaultMessage() + "; ");
         }
 
-        String message=new String(stringBuilder);
+        String message = new String(stringBuilder);
 
-        CustomError error = new CustomError(HttpStatus.BAD_REQUEST, message,Instant.now());
+        CustomError error = new CustomError(HttpStatus.BAD_REQUEST, message, Instant.now());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 }

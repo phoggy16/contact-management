@@ -7,7 +7,6 @@ import com.cms.cms.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,8 +15,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -49,8 +46,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .password(bCryptPasswordEncoder.encode(userRegistrationDto.getPassword()))
                 .username(userRegistrationDto.getUsername()).build();
         UserEntity user = userRepo.findByUsername(userEntity.getUsername());
-        if (user!=null){
-            throw new CustomException(HttpStatus.BAD_REQUEST,"Username already exists");
+        if (user != null) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "Username already exists");
         }
         userRepo.save(userEntity);
     }

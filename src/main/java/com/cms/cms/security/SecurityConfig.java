@@ -2,7 +2,7 @@ package com.cms.cms.security;
 
 import com.cms.cms.exceptionhandling.CustomAuthenticationEntryPoint;
 import com.cms.cms.filter.CustomAuthorizationFilter;
-import com.cms.cms.service.UserService;
+import com.cms.cms.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final UserService userService;
+    private final JWTUtil jwtUtil;
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -47,9 +47,9 @@ public class SecurityConfig {
                                 "/api-docs/**",
                                 "/v3/api-docs/**", "/configuration/ui/**", "/swagger-resources/**", "/configuration/security/**", "/webjars/**").permitAll()
                         .anyRequest().authenticated()
-                ).exceptionHandling(exception-> exception.authenticationEntryPoint((new CustomAuthenticationEntryPoint())));
+                ).exceptionHandling(exception -> exception.authenticationEntryPoint((new CustomAuthenticationEntryPoint())));
 
-        http.addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new CustomAuthorizationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
