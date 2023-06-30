@@ -27,6 +27,6 @@ public class LoginService {
         String accessToken = jwtUtil.generateJWTToken(loginRequest.getUsername(), requestURL, new Date(System.currentTimeMillis() + 10 * 60 * 1000));
         String refreshToken = jwtUtil.generateJWTToken(loginRequest.getUsername(), requestURL, new Date(System.currentTimeMillis() + 1000 * 60 * 1000));
 
-        return LoginResponseDTO.builder().accessToken(accessToken).refreshToken(refreshToken).build();
+        return LoginResponseDTO.builder().accessToken(accessToken).build();
     }
 }
